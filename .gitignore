@@ -1,0 +1,14 @@
+# 의존성
+node_modules/
+package-lock.json
+
+# 운영체제 임시 파일
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# 로그
+logs
+*.log
+npm-debug.log*

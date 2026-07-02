@@ -1,0 +1,58 @@
+name: Distributed Traffic Tester (Optimized)
+
+run-name: Booster-Task-${{ inputs.user_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL'
+        required: true
+      site_type:
+        description: 'Site Type (NAVER, FEMCO, etc.)'
+        required: true
+      total_count:
+        description: 'Total Target Count'
+        default: '20'
+      user_id:
+        description: 'Requested User ID'
+        required: true
+
+concurrency:
+  group: viewbooster-${{ inputs.user_id }}
+  cancel-in-progress: true
+
+jobs:
+  boost:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+        run: |
+          npm install
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable libgbm-dev
+
+      - name: Run Worker
+        env:
+          WORKER_ID: ${{ matrix.worker_id }}
+        run: |
+          DELAY=$((1 + RANDOM % 60))
+          echo "Waiting for $DELAY seconds..."
+          sleep $DELAY
+          node github_worker.js "${{ github.event.inputs.target_url }}" "${{ github.event.inputs.site_type }}" "${{ github.event.inputs.total_count }}" "${{ github.event.inputs.user_id }}"
