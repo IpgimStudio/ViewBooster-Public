@@ -33,18 +33,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+          cache: 'pnpm'
 
+      # 3. 패키지 설치 명령어를 npm에서 pnpm으로 변경합니다.
       - name: Install Dependencies
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
         run: |
-          npm install
+          pnpm install
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable libgbm-dev
 
