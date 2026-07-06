@@ -27,6 +27,11 @@ const runMimint = require('./boosters/mimint');
 const runJayoung = require('./boosters/jayoung');
 const runNaverKin = require('./boosters/naver_kin');
 const runBlind = require('./boosters/blind');
+const runDealbada = require('./boosters/dealbada');
+const runTe31 = require('./boosters/te');
+const runZod = require('./boosters/zod');
+const runDasaja = require('./boosters/dasaja');
+const runDeokjil = require('./boosters/deokjil');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -39,7 +44,9 @@ const boosters = {
     DOGDRIP: runDogdrip, DCINSIDE: runDcinside, DONPPU: runDonppu, DAUM: runDaum,
     DIMITORY: runDimitory, FANCUG: runFancug, THREDIC: runThredic, ETOLAND: runEtoland,
     NATEPANN: runNatepann, BOBAEDREAM: runBobaedream, MLBPARK: runMlbpark,
-    EOMISAE: runEomisae, MIMINT: runMimint, JAYOUNG: runJayoung
+    EOMISAE: runEomisae, MIMINT: runMimint, JAYOUNG: runJayoung,
+    BLIND: runBlind, DEALBADA: runDealbada, TE31: runTe31, ZOD: runZod,
+    DASAJA: runDasaja, DEOKJIL: runDeokjil
 };
 
 async function start() {
