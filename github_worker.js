@@ -135,7 +135,7 @@ async function start() {
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
 
-                await new Promise(r => setTimeout(r, 1500 + Math.random() * 2500));
+                await new Promise(r => setTimeout(r, 4000 + Math.random() * 3000));
 
             } catch (iterationError) {
                 console.error(`[${userId}][W${workerId}] 에러 발생:`, iterationError.message);
