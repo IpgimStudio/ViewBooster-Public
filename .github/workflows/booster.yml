@@ -17,6 +17,9 @@ on:
       user_id:
         description: 'Requested User ID'
         required: true
+      delay:
+        description: 'Delay per hit (seconds)'
+        default: '5'
 
 concurrency:
   group: viewbooster-${{ inputs.user_id }}
@@ -61,4 +64,4 @@ jobs:
           DELAY=$((1 + RANDOM % 60))
           echo "Waiting for $DELAY seconds..."
           sleep $DELAY
-          node github_worker.js "${{ github.event.inputs.target_url }}" "${{ github.event.inputs.site_type }}" "${{ github.event.inputs.total_count }}" "${{ github.event.inputs.user_id }}"
+          node github_worker.js "${{ github.event.inputs.target_url }}" "${{ github.event.inputs.site_type }}" "${{ github.event.inputs.total_count }}" "${{ github.event.inputs.user_id }}" "${{ github.event.inputs.delay }}"

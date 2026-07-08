@@ -43,6 +43,7 @@ async function start() {
     const siteType = process.argv[3];
     const totalCount = parseInt(process.argv[4] || "0");
     const userId = process.argv[5] || "UnknownUser"; 
+    const delay = parseInt(process.argv[6] || "5", 10);
     const workerId = parseInt(process.env.WORKER_ID || "1");
 
     if (!targetUrl || totalCount <= 0) {
@@ -135,7 +136,7 @@ async function start() {
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
 
-                await new Promise(r => setTimeout(r, 4000 + Math.random() * 3000));
+                await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
 
             } catch (iterationError) {
                 console.error(`[${userId}][W${workerId}] 에러 발생:`, iterationError.message);
