@@ -94,7 +94,8 @@ async function start() {
     try {
         for (let i = 1; i <= myIterations; i++) {
             try {
-                console.log(`[${userId}][W${workerId}] 진행: ${i}/${myIterations}`);
+                const now = new Date().toLocaleTimeString('ko-KR');
+                console.log(`[${now}] [${userId}][W${workerId}] 진행: ${i}/${myIterations}`);
 
                 let context = await browser.createIncognitoBrowserContext().catch(() => browser);
                 const page = await (context === browser ? browser.newPage() : context.newPage());
