@@ -17,6 +17,7 @@ const runZod = require('./boosters/zod');
 const runDasaja = require('./boosters/dasaja');
 const runDeokjil = require('./boosters/deokjil');
 const runFootsell = require('./boosters/footsell');
+const runInven = require('./boosters/inven');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -37,7 +38,8 @@ const boosters = {
     ZOD: runZod,
     DASAJA: runDasaja, 
     DEOKJIL: runDeokjil,
-    FOOTSELL: runFootsell
+    FOOTSELL: runFootsell,
+    INVEN: runInven,
 };
 
 async function start() {
