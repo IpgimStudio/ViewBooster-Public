@@ -17,12 +17,9 @@ on:
       user_id:
         description: 'Requested User ID'
         required: true
-      delay:
-        description: 'Delay per hit (seconds)'
-        default: '5'
 
 concurrency:
-  group: viewbooster-${{ inputs.user_id }}
+  group: viewboost-${{ inputs.user_id }}
   cancel-in-progress: true
 
 jobs:
@@ -36,24 +33,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
+          cache: 'npm'
 
-      # 3. 패키지 설치 명령어를 npm에서 pnpm으로 변경합니다.
       - name: Install Dependencies
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
         run: |
-          pnpm install
+          npm install puppeteer-extra puppeteer-extra-plugin-stealth user-agents
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable libgbm-dev
 
