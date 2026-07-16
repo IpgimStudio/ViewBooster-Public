@@ -19,6 +19,9 @@ const runDeokjil = require('./boosters/deokjil');
 const runFootsell = require('./boosters/footsell');
 const runInven = require('./boosters/inven');
 const runSelfdating = require('./boosters/selfdating');
+const runSlrclub = require('./boosters/slrclub');
+const runDvdprime = require('./boosters/dvdprime'); 
+const runEtoland = require('./boosters/etoland');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -42,6 +45,9 @@ const boosters = {
     FOOTSELL: runFootsell,
     INVEN: runInven,
     SELFDATING: runSelfdating,
+    SLRCLUB: runSlrclub,
+    DVDPRIME: runDvdprime,
+    ETOLAND: runEtoland,
 };
 
 async function start() {
