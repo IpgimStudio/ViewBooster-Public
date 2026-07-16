@@ -5,49 +5,47 @@ const UserAgent = require('user-agents');
 const runInstiz = require('./boosters/instiz');
 const runTheqoo = require('./boosters/theqoo');
 const runPpomppu = require('./boosters/ppomppu');
-const runFemco = require('./boosters/fmkorea');
-const runNaver = require('./boosters/naver');
-const runRuliweb = require('./boosters/ruliweb');
 const runQuasarzone = require('./boosters/quasarzone');
 const runArcalive = require('./boosters/arcalive');
-const runInven = require('./boosters/inven');
 const runDogdrip = require('./boosters/dogdrip');
-const runDcinside = require('./boosters/dcinside');
-const runDonppu = require('./boosters/donppu');
-const runDaum = require('./boosters/daum');
 const runDimitory = require('./boosters/dimitory');
-const runFancug = require('./boosters/fancug');
-const runThredic = require('./boosters/thredic');
-const runEtoland = require('./boosters/etoland');
-const runNatepann = require('./boosters/natepann'); 
-const runBobaedream = require('./boosters/bobaedream');
-const runMlbpark = require('./boosters/mlbpark'); 
 const runEomisae = require('./boosters/eomisae');
-const runMimint = require('./boosters/mimint');
-const runJayoung = require('./boosters/jayoung');
-const runNaverKin = require('./boosters/naver_kin');
-const runBlind = require('./boosters/blind');
-const runYgosu = require('./boosters/ygosu');
 const runDealbada = require('./boosters/dealbada');
 const runTe31 = require('./boosters/te');
 const runZod = require('./boosters/zod');
 const runDasaja = require('./boosters/dasaja');
 const runDeokjil = require('./boosters/deokjil');
+const runFootsell = require('./boosters/footsell');
+const runInven = require('./boosters/inven');
+const runSelfdating = require('./boosters/selfdating');
+const runSlrclub = require('./boosters/slrclub');
+const runDvdprime = require('./boosters/dvdprime'); 
+const runEtoland = require('./boosters/etoland');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
 puppeteer.use(stealth);
 
 const boosters = {
-    INSTIZ: runInstiz, THEQOO: runTheqoo, PPOMPPU: runPpomppu,
-    FEMCO: runFemco, NAVER: runNaver, RULIWEB: runRuliweb, NAVER_KIN: runNaverKin,
-    QUASARZONE: runQuasarzone, ARCALIVE: runArcalive, INVEN: runInven,
-    DOGDRIP: runDogdrip, DCINSIDE: runDcinside, DONPPU: runDonppu, DAUM: runDaum,
-    DIMITORY: runDimitory, FANCUG: runFancug, THREDIC: runThredic, ETOLAND: runEtoland,
-    NATEPANN: runNatepann, BOBAEDREAM: runBobaedream, MLBPARK: runMlbpark,
-    EOMISAE: runEomisae, MIMINT: runMimint, JAYOUNG: runJayoung,
-    BLIND: runBlind, DEALBADA: runDealbada, TE31: runTe31, ZOD: runZod,
-    DASAJA: runDasaja, DEOKJIL: runDeokjil
+    INSTIZ: runInstiz, 
+    THEQOO: runTheqoo, 
+    PPOMPPU: runPpomppu,
+    QUASARZONE: runQuasarzone, 
+    ARCALIVE: runArcalive, 
+    DOGDRIP: runDogdrip, 
+    DIMITORY: runDimitory, 
+    EOMISAE: runEomisae, 
+    DEALBADA: runDealbada, 
+    TE31: runTe31, 
+    ZOD: runZod,
+    DASAJA: runDasaja, 
+    DEOKJIL: runDeokjil,
+    FOOTSELL: runFootsell,
+    INVEN: runInven,
+    SELFDATING: runSelfdating,
+    SLRCLUB: runSlrclub,
+    DVDPRIME: runDvdprime,
+    ETOLAND: runEtoland,
 };
 
 async function start() {
