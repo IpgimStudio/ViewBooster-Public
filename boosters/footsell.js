@@ -1,29 +1,28 @@
-module.exports = async (page, url, addLog) => {
+module.exports = async (page, url) => {
     try {
-        // 페이지 이동
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // 1. 페이지 로드
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
         await new Promise(r => setTimeout(r, 2000));
 
-        // 봇 탐지를 피하기 위한 자연스러운 스크롤 액션
+        // 2. 본문 렌더링 대기 (조회수 컨테이너 기준)
+        await page.waitForSelector('#view_hit', { timeout: 15000 }).catch(() => {});
+
+        // 3. 봇 감지 우회를 위한 사람과 유사한 스크롤 액션
         await page.evaluate(async () => {
-            for (let i = 0; i < 4; i++) {
-                window.scrollBy(0, 300 + Math.random() * 200);
-                await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
+            const loops = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < loops; i++) {
+                window.scrollBy({ top: 300 + Math.random() * 200, behavior: 'smooth' });
+                await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
             }
-            window.scrollBy(0, -200);
         });
 
-        // 12~18초 체류 (자연스러운 읽기 시간 보장)
-        const stay = 12000 + Math.random() * 6000;
-        if (addLog) addLog(`[FOOTSELL] 본문 체류 중... (${(stay / 1000).toFixed(1)}s)`);
-        
-        await new Promise(r => setTimeout(r, stay));
+        // 4. 비동기 통신이 완료되도록 충분한 체류 시간 확보
+        const stayTime = 5000 + Math.floor(Math.random() * 3000);
+        await new Promise(r => setTimeout(r, stayTime));
+
         return true;
     } catch (e) {
-        if (e.message.includes('Target closed') || e.message.includes('Session closed')) {
-            return false;
-        }
-        if (addLog) addLog(`[FOOTSELL] 에러: ${e.message}`);
+        console.error("풋셀 부스터 모듈 에러:", e.message);
         return false;
     }
 };
