@@ -129,7 +129,19 @@ async function start() {
                     const url = req.url();
                     const type = req.resourceType();
                     const allowedDomains = ['naver.com', 'naver.net', 'daum.net', 'daumcdn.net', 'kakao.com', 'nate.com'];
+                    
                     if (allowedDomains.some(domain => url.includes(domain))) return req.continue();
+
+                    // 💡 [수정됨] 풋셀 전용 분기 처리: 조회수 트래킹 방해를 막기 위해 image, font 허용
+                    if (siteType === 'FOOTSELL') {
+                        // 무거운 동영상과 순수 광고 스크립트만 차단
+                        if (['media'].includes(type) || url.includes('google-analytics') || url.includes('doubleclick') || url.includes('ads')) {
+                            return req.abort();
+                        }
+                        return req.continue();
+                    }
+
+                    // 기존 타 사이트 로직 (이미지, 폰트, 미디어 차단)
                     if (['image', 'font', 'media'].includes(type)) return req.abort();
                     req.continue();
                 });
