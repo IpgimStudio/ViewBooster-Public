@@ -21,6 +21,7 @@ const runSelfdating = require('./boosters/selfdating');
 const runSlrclub = require('./boosters/slrclub');
 const runDvdprime = require('./boosters/dvdprime'); 
 const runEtoland = require('./boosters/etoland');
+const runDcinside = require('./boosters/dcinside');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -47,6 +48,7 @@ const boosters = {
     DVDPRIME: runDvdprime,
     ETOLAND: runEtoland,
     FOOTSELL: runFootsell, 
+    DCINSIDE: runDcinside, 
 };
 
 async function start() {
