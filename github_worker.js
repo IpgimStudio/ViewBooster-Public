@@ -22,6 +22,7 @@ const runSlrclub = require('./boosters/slrclub');
 const runDvdprime = require('./boosters/dvdprime'); 
 const runEtoland = require('./boosters/etoland');
 const runDcinside = require('./boosters/dcinside');
+const axios = require('axios');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -165,18 +166,32 @@ async function start() {
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
 
-                // 💡 [Webhook Push 추가] 부스팅 1회 성공 시 백엔드로 즉시 진행률 알림 전송!
+                // 💡 [수정 후] GitHub Secrets 환경변수 사용
                 if (isSuccess) {
-                    const axios = require('axios');
-                    await axios.post('http://너의백엔드서버주소.com:15011/api/cloud-progress', {
-                        userId: userId,
-                        url: targetUrl,
-                        siteName: siteType
-                    }, { timeout: 3000 }).catch(err => {
-                        console.log(`[Webhook 전송 실패]: ${err.message}`);
-                    });
+                    const { MongoClient } = require('mongodb');
+                    const uri = process.env.MONGODB_URI;
+                    
+                    if (!uri) {
+                        console.log("[MongoDB 오류] MONGODB_URI 환경변수가 누락되었습니다.");
+                    } else {
+                        const client = new MongoClient(uri);
+                        try {
+                            await client.connect();
+                            const db = client.db('global_auth_center');
+                            
+                            await db.collection('cloud_progress').updateOne(
+                                { userId: userId, url: targetUrl, siteName: siteType },
+                                { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+                                { upsert: true }
+                            );
+                            console.log(`[MongoDB 기록] ${siteType} 카운트 1 누적 완료`);
+                        } catch (dbErr) {
+                            console.log(`[MongoDB 기록 실패]: ${dbErr.message}`);
+                        } finally {
+                            await client.close();
+                        }
+                    }
                 }
-
                 await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
 
             } catch (iterationError) {

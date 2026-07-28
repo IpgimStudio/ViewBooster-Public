@@ -54,6 +54,7 @@ jobs:
       - name: Run Worker
         env:
           WORKER_ID: ${{ matrix.worker_id }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           DELAY=$((1 + RANDOM % 60))
           echo "Waiting for $DELAY seconds..."
