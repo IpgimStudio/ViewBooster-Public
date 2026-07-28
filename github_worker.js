@@ -148,11 +148,14 @@ async function start() {
                 });
 
                 const runBooster = boosters[siteType];
+                let isSuccess = false; // 💡 성공 여부 추적
+
                 if (runBooster) {
-                    await runBooster(page, targetUrl, (msg) => 
+                    isSuccess = await runBooster(page, targetUrl, (msg) => 
                         console.log(`[${userId}][W${workerId}] ${msg}`)
-                    ).catch(e => {
+                    ).then(() => true).catch(e => {
                         console.log(`[${userId}][W${workerId}] 시도 실패: ${e.message}`);
+                        return false;
                     });
                 } else {
                     console.log(`[${userId}][W${workerId}] 미지원 사이트: ${siteType}`);
@@ -161,6 +164,18 @@ async function start() {
                 
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
+
+                // 💡 [Webhook Push 추가] 부스팅 1회 성공 시 백엔드로 즉시 진행률 알림 전송!
+                if (isSuccess) {
+                    const axios = require('axios');
+                    await axios.post('http://너의백엔드서버주소.com:15011/api/cloud-progress', {
+                        userId: userId,
+                        url: targetUrl,
+                        siteName: siteType
+                    }, { timeout: 3000 }).catch(err => {
+                        console.log(`[Webhook 전송 실패]: ${err.message}`);
+                    });
+                }
 
                 await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
 
