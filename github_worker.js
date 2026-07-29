@@ -48,7 +48,6 @@ const boosters = {
     SLRCLUB: runSlrclub,
     DVDPRIME: runDvdprime,
     ETOLAND: runEtoland,
-    FOOTSELL: runFootsell, 
     DCINSIDE: runDcinside, 
 };
 
@@ -102,7 +101,8 @@ async function start() {
             }
         }
     };
-const browser = await launchBrowser();
+    
+    const browser = await launchBrowser();
 
     // 1. 루프 시작 전 MongoDB 클라이언트 단 1회 연결 (연결 오버헤드 방지)
     const { MongoClient } = require('mongodb');
@@ -132,7 +132,7 @@ const browser = await launchBrowser();
                 let context = await browser.createIncognitoBrowserContext().catch(() => browser);
                 const page = await (context === browser ? browser.newPage() : context.newPage());
                 
-                page.setDefaultNavigationTimeout(45000);
+                // 💡 [수정됨] 중복 설정 코드 1줄 제거
                 page.setDefaultNavigationTimeout(45000);
 
                 // 무작위 UA 대신 신뢰도 높은 최신 Chrome UA 고정 사용 (Stealth 플러그인과 궁합이 좋음)
@@ -152,9 +152,8 @@ const browser = await launchBrowser();
                     
                     if (allowedDomains.some(domain => url.includes(domain))) return req.continue();
 
-                    // 💡 [수정됨] 풋셀 전용 분기 처리: 조회수 트래킹 방해를 막기 위해 image, font 허용
+                    // 💡 풋셀 전용 분기 처리: 조회수 트래킹 방해를 막기 위해 image, font 허용
                     if (siteType === 'FOOTSELL') {
-                        // 무거운 동영상과 순수 광고 스크립트만 차단
                         if (['media'].includes(type) || url.includes('google-analytics') || url.includes('doubleclick') || url.includes('ads')) {
                             return req.abort();
                         }
@@ -167,7 +166,7 @@ const browser = await launchBrowser();
                 });
 
                 const runBooster = boosters[siteType];
-                let isSuccess = false; // 💡 성공 여부 추적
+                let isSuccess = false; // 성공 여부 추적
 
                 if (runBooster) {
                     isSuccess = await runBooster(page, targetUrl, (msg) => 
@@ -213,5 +212,6 @@ const browser = await launchBrowser();
         console.log(`🏁 [${userId}][W${workerId}] 작업 완료 및 종료.`);
         process.exit(0);
     }
+} // 💡 [수정됨] start() 함수를 닫는 중괄호 추가
 
 start();
