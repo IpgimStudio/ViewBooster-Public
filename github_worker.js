@@ -102,8 +102,26 @@ async function start() {
             }
         }
     };
+const browser = await launchBrowser();
 
-    const browser = await launchBrowser();
+    // 1. 루프 시작 전 MongoDB 클라이언트 단 1회 연결 (연결 오버헤드 방지)
+    const { MongoClient } = require('mongodb');
+    const uri = process.env.MONGODB_URI;
+    let dbClient = null;
+    let cloudProgressCol = null;
+
+    if (!uri) {
+        console.log("[MongoDB 오류] MONGODB_URI 환경변수가 누락되었습니다.");
+    } else {
+        try {
+            dbClient = new MongoClient(uri);
+            await dbClient.connect();
+            cloudProgressCol = dbClient.db('global_auth_center').collection('cloud_progress');
+            console.log(`[MongoDB] 서버 연결 성공`);
+        } catch (dbInitErr) {
+            console.error(`[MongoDB 연결 실패]: ${dbInitErr.message}`);
+        }
+    }
 
     try {
         for (let i = 1; i <= myIterations; i++) {
@@ -166,30 +184,17 @@ async function start() {
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
 
-                // 💡 [수정 후] GitHub Secrets 환경변수 사용
-                if (isSuccess) {
-                    const { MongoClient } = require('mongodb');
-                    const uri = process.env.MONGODB_URI;
-                    
-                    if (!uri) {
-                        console.log("[MongoDB 오류] MONGODB_URI 환경변수가 누락되었습니다.");
-                    } else {
-                        const client = new MongoClient(uri);
-                        try {
-                            await client.connect();
-                            const db = client.db('global_auth_center');
-                            
-                            await db.collection('cloud_progress').updateOne(
-                                { userId: userId, url: targetUrl, siteName: siteType },
-                                { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
-                                { upsert: true }
-                            );
-                            console.log(`[MongoDB 기록] ${siteType} 카운트 1 누적 완료`);
-                        } catch (dbErr) {
-                            console.log(`[MongoDB 기록 실패]: ${dbErr.message}`);
-                        } finally {
-                            await client.close();
-                        }
+                // 2. 루프 내부에서는 이미 연결된 컬렉션 객체를 통해 updateOne만 실행
+                if (isSuccess && cloudProgressCol) {
+                    try {
+                        await cloudProgressCol.updateOne(
+                            { userId: userId, url: targetUrl, siteName: siteType },
+                            { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+                            { upsert: true }
+                        );
+                        console.log(`[MongoDB 기록] ${siteType} 카운트 1 누적 완료`);
+                    } catch (dbErr) {
+                        console.log(`[MongoDB 기록 실패]: ${dbErr.message}`);
                     }
                 }
                 await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
@@ -203,9 +208,10 @@ async function start() {
         console.error(`[${userId}][W${workerId}] 치명적 에러:`, e.message);
     } finally {
         if (browser) await browser.close().catch(() => {});
+        // 3. 작업 종료 시 DB 연결 해제
+        if (dbClient) await dbClient.close().catch(() => {});
         console.log(`🏁 [${userId}][W${workerId}] 작업 완료 및 종료.`);
         process.exit(0);
     }
-}
 
 start();
