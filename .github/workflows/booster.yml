@@ -47,7 +47,7 @@ jobs:
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
         run: |
-          npm install puppeteer-extra puppeteer-extra-plugin-stealth user-agents
+          npm install puppeteer-extra puppeteer-extra-plugin-stealth user-agents mongodb
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable libgbm-dev
 
