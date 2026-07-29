@@ -168,11 +168,18 @@ async function start() {
                 const runBooster = boosters[siteType];
                 let isSuccess = false; // 성공 여부 추적
 
-                if (runBooster) {
+if (runBooster) {
+                    const startTime = Date.now();
                     isSuccess = await runBooster(page, targetUrl, (msg) => 
                         console.log(`[${userId}][W${workerId}] ${msg}`)
-                    ).then(() => true).catch(e => {
-                        console.log(`[${userId}][W${workerId}] 시도 실패: ${e.message}`);
+                    ).then(() => {
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        if (elapsed < 2.0) {
+                            console.log(`[${userId}][W${workerId}] ⚠️ 경고: 완료 속도가 너무 빠릅니다(${elapsed}초). 부스터 파일의 await 누락을 확인하세요.`);
+                        }
+                        return true;
+                    }).catch(e => {
+                        console.log(`[${userId}][W${workerId}] ❌ 시도 실패 (DB 제외): ${e.message}`);
                         return false;
                     });
                 } else {
@@ -186,15 +193,18 @@ async function start() {
                 // 2. 루프 내부에서는 이미 연결된 컬렉션 객체를 통해 updateOne만 실행
                 if (isSuccess && cloudProgressCol) {
                     try {
-                        await cloudProgressCol.updateOne(
+                        const updateResult = await cloudProgressCol.findOneAndUpdate(
                             { userId: userId, url: targetUrl, siteName: siteType },
                             { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
-                            { upsert: true }
+                            { upsert: true, returnDocument: 'after' }
                         );
-                        console.log(`[MongoDB 기록] ${siteType} 카운트 1 누적 완료`);
+                        const currentTotal = updateResult?.count || updateResult?.value?.count || "확인불가";
+                        console.log(`[MongoDB 실시간 반영] ✔️ ${siteType} +1 누적 완료! (현재 DB 총합: ${currentTotal}회)`);
                     } catch (dbErr) {
                         console.log(`[MongoDB 기록 실패]: ${dbErr.message}`);
                     }
+                } else {
+                    console.log(`[${userId}][W${workerId}] ⏭️ 조회 실패로 DB 카운트를 올리지 않았습니다.`);
                 }
                 await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
 
@@ -212,6 +222,6 @@ async function start() {
         console.log(`🏁 [${userId}][W${workerId}] 작업 완료 및 종료.`);
         process.exit(0);
     }
-} // 💡 [수정됨] start() 함수를 닫는 중괄호 추가
+}
 
 start();
