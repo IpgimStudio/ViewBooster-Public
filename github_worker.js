@@ -22,6 +22,7 @@ const runSlrclub = require('./boosters/slrclub');
 const runDvdprime = require('./boosters/dvdprime'); 
 const runEtoland = require('./boosters/etoland');
 const runDcinside = require('./boosters/dcinside');
+const axios = require('axios');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -47,7 +48,6 @@ const boosters = {
     SLRCLUB: runSlrclub,
     DVDPRIME: runDvdprime,
     ETOLAND: runEtoland,
-    FOOTSELL: runFootsell, 
     DCINSIDE: runDcinside, 
 };
 
@@ -101,8 +101,27 @@ async function start() {
             }
         }
     };
-
+    
     const browser = await launchBrowser();
+
+    // 1. 루프 시작 전 MongoDB 클라이언트 단 1회 연결 (연결 오버헤드 방지)
+    const { MongoClient } = require('mongodb');
+    const uri = process.env.MONGODB_URI;
+    let dbClient = null;
+    let cloudProgressCol = null;
+
+    if (!uri) {
+        console.log("[MongoDB 오류] MONGODB_URI 환경변수가 누락되었습니다.");
+    } else {
+        try {
+            dbClient = new MongoClient(uri);
+            await dbClient.connect();
+            cloudProgressCol = dbClient.db('global_auth_center').collection('cloud_progress');
+            console.log(`[MongoDB] 서버 연결 성공`);
+        } catch (dbInitErr) {
+            console.error(`[MongoDB 연결 실패]: ${dbInitErr.message}`);
+        }
+    }
 
     try {
         for (let i = 1; i <= myIterations; i++) {
@@ -113,7 +132,7 @@ async function start() {
                 let context = await browser.createIncognitoBrowserContext().catch(() => browser);
                 const page = await (context === browser ? browser.newPage() : context.newPage());
                 
-                page.setDefaultNavigationTimeout(45000);
+                // 💡 [수정됨] 중복 설정 코드 1줄 제거
                 page.setDefaultNavigationTimeout(45000);
 
                 // 무작위 UA 대신 신뢰도 높은 최신 Chrome UA 고정 사용 (Stealth 플러그인과 궁합이 좋음)
@@ -133,9 +152,8 @@ async function start() {
                     
                     if (allowedDomains.some(domain => url.includes(domain))) return req.continue();
 
-                    // 💡 [수정됨] 풋셀 전용 분기 처리: 조회수 트래킹 방해를 막기 위해 image, font 허용
+                    // 💡 풋셀 전용 분기 처리: 조회수 트래킹 방해를 막기 위해 image, font 허용
                     if (siteType === 'FOOTSELL') {
-                        // 무거운 동영상과 순수 광고 스크립트만 차단
                         if (['media'].includes(type) || url.includes('google-analytics') || url.includes('doubleclick') || url.includes('ads')) {
                             return req.abort();
                         }
@@ -148,11 +166,21 @@ async function start() {
                 });
 
                 const runBooster = boosters[siteType];
-                if (runBooster) {
-                    await runBooster(page, targetUrl, (msg) => 
+                let isSuccess = false; // 성공 여부 추적
+
+if (runBooster) {
+                    const startTime = Date.now();
+                    isSuccess = await runBooster(page, targetUrl, (msg) => 
                         console.log(`[${userId}][W${workerId}] ${msg}`)
-                    ).catch(e => {
-                        console.log(`[${userId}][W${workerId}] 시도 실패: ${e.message}`);
+                    ).then(() => {
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        if (elapsed < 2.0) {
+                            console.log(`[${userId}][W${workerId}] ⚠️ 경고: 완료 속도가 너무 빠릅니다(${elapsed}초). 부스터 파일의 await 누락을 확인하세요.`);
+                        }
+                        return true;
+                    }).catch(e => {
+                        console.log(`[${userId}][W${workerId}] ❌ 시도 실패 (DB 제외): ${e.message}`);
+                        return false;
                     });
                 } else {
                     console.log(`[${userId}][W${workerId}] 미지원 사이트: ${siteType}`);
@@ -162,6 +190,22 @@ async function start() {
                 if (context !== browser) await context.close().catch(() => {});
                 else await page.close().catch(() => {});
 
+                // 2. 루프 내부에서는 이미 연결된 컬렉션 객체를 통해 updateOne만 실행
+                if (isSuccess && cloudProgressCol) {
+                    try {
+                        const updateResult = await cloudProgressCol.findOneAndUpdate(
+                            { userId: userId, url: targetUrl, siteName: siteType },
+                            { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+                            { upsert: true, returnDocument: 'after' }
+                        );
+                        const currentTotal = updateResult?.count || updateResult?.value?.count || "확인불가";
+                        console.log(`[MongoDB 실시간 반영] ✔️ ${siteType} +1 누적 완료! (현재 DB 총합: ${currentTotal}회)`);
+                    } catch (dbErr) {
+                        console.log(`[MongoDB 기록 실패]: ${dbErr.message}`);
+                    }
+                } else {
+                    console.log(`[${userId}][W${workerId}] ⏭️ 조회 실패로 DB 카운트를 올리지 않았습니다.`);
+                }
                 await new Promise(r => setTimeout(r, (delay * 1000) + Math.random() * 2000));
 
             } catch (iterationError) {
@@ -173,6 +217,8 @@ async function start() {
         console.error(`[${userId}][W${workerId}] 치명적 에러:`, e.message);
     } finally {
         if (browser) await browser.close().catch(() => {});
+        // 3. 작업 종료 시 DB 연결 해제
+        if (dbClient) await dbClient.close().catch(() => {});
         console.log(`🏁 [${userId}][W${workerId}] 작업 완료 및 종료.`);
         process.exit(0);
     }
